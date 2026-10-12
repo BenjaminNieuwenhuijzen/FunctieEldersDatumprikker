@@ -60,7 +60,7 @@ API key) na het verifiëren van het domein.
 
 ### 1d. Opruimen
 
-Edge Functions → verwijder `submit-vote` en `update-vote` (vervallen; geven nu 410).
+Gedaan (12-10-2026): de vervallen Edge Functions `submit-vote` en `update-vote` zijn verwijderd.
 
 ## 2. Een etentje organiseren
 
