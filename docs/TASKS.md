@@ -10,7 +10,7 @@ Legenda: ✅ klaar en getest · 🧪 gebouwd, nog niet end-to-end getest · ⏳ 
 ## Fase B — Echte datumprikker
 
 - ✅ Schema + RLS + RPC's in Supabase (migrations in `supabase/migrations/`)
-- ✅ 35 database-beveiligingstests geslaagd
+- ✅ 35 + 16 database-tests geslaagd (rls_negative.sql, votes.sql)
 - ✅ Publieke pagina's lezen echte data (home, event, geschiedenis)
 - 🧪 Inloggen met e-mailcode → stemmen → wijzigen (⏳ SMTP via Gmail, zie OPERATIONS 1b)
 - 🧪 Beheer: etentjes, datums, restaurants, openen/sluiten, aanwezigheid, CSV, afronden,
@@ -20,8 +20,9 @@ Legenda: ✅ klaar en getest · 🧪 gebouwd, nog niet end-to-end getest · ⏳ 
 ## Fase C — Groepsarchief
 
 - ✅ Tabel `visits` + publieke tijdlijn; eerste bezoek (Daebak, 27-03-2026) vastgelegd
-- Ontdekpagina met goedgekeurde ideeën + "lijkt me leuk / niks"-reacties
-- Optionele foto's (Supabase Storage)
+- ✅ Ontdek-pagina: kaart, tips van de beheerder (6), ideeën insturen, 👍/👎 (1 stem p.p.)
+- ✅ Automatische suggesties uit OpenStreetMap (dagelijks, pg_cron) + uitlegbare ranker
+- Optionele foto's (Supabase Storage) / Google Places (betaald, niet gekozen)
 
 ## Fase D — Aanbevelingen · Fase E — Afwerking
 

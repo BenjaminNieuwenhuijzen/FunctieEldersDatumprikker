@@ -13,7 +13,7 @@ Productie: <https://benjaminnieuwenhuijzen.github.io/FunctieEldersDatumprikker/>
 | Database, RLS, publieke lees-RPC's, geschiedenis-tijdlijn         | werkt (35 beveiligingstests geslaagd)    |
 | Inloggen met e-mail (link of code), stemmen, wijzigen             | gebouwd; voor de groep na SMTP-setup     |
 | Beheer (etentjes, datums, restaurants, aanwezigheid, afronden)    | gebouwd; werkt zodra er een beheerder is |
-| Ontdekpagina met ideeën en reacties, aanbevelingen                | Fase C/D                                 |
+| Ontdek: kaart, automatische suggesties (OSM), tips, 👍/👎         | werkt                                    |
 
 ## Hoe het werkt
 

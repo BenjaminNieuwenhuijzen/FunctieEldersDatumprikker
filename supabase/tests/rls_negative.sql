@@ -163,12 +163,13 @@ end $$;
 reset role;
 
 -- Anon mag uitsluitend deze publieke lees-RPC's uitvoeren (vangt vergeten grants bij nieuwe functies).
-select pg_temp.t('anon: alleen de 6 publieke lees-RPC''s', (
+select pg_temp.t('anon: alleen de publieke lees-RPC''s', (
   select coalesce(array_agg(p.proname::text order by p.proname), '{}') from pg_proc p
   join pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute'))
-  = array['get_active_event','get_public_event','get_public_settings','get_public_tally',
-          'get_public_visits','get_upcoming_venues']);
+  = array['get_active_event','get_discover_meta','get_discover_places','get_public_event',
+          'get_public_settings','get_public_suggestions','get_public_tally','get_public_visits',
+          'get_upcoming_venues','get_vote_tallies']);
 
 select split_part(r, '|', 1) as test, split_part(r, '|', 2)::boolean as ok
 from unnest(string_to_array(trim(trailing ';' from current_setting('t.results')), ';')) as r;

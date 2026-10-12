@@ -224,3 +224,49 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Leaflet: popups en bediening in de huisstijl. */
+.leaflet-container {
+  background: var(--color-ink);
+  font-family: var(--font-body);
+}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  border: 1px solid var(--color-line);
+}
+.leaflet-popup-content {
+  margin: 12px 14px;
+}
+.fe-popup strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+.fe-popup div {
+  color: var(--color-mist);
+  font-size: 0.8rem;
+}
+.fe-popup a {
+  display: inline-block;
+  margin-top: 6px;
+  color: var(--color-coral);
+  font-weight: 600;
+}
+.leaflet-bar a {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  border-color: var(--color-line);
+}
+.leaflet-control-attribution {
+  background: rgb(12 18 32 / 0.8) !important;
+  color: var(--color-mist);
+}
+.leaflet-control-attribution a {
+  color: var(--color-paper);
+}
+/* OSM-tegels in donkere modus, passend bij de huisstijl. */
+.fe-dark-tiles {
+  filter: invert(1) hue-rotate(185deg) brightness(0.85) contrast(0.9) saturate(0.6);
+}

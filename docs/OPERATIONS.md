@@ -72,6 +72,30 @@ Edge Functions → verwijder `submit-vote` en `update-vote` (vervallen; geven nu
 6. Na het etentje: **Afronden** met de werkelijke datum en het restaurant. Dit zet het bezoek in de
    geschiedenis. Niets wordt automatisch afgeleid uit de stemming.
 
+## 2b. Ontdek-pagina (automatische suggesties)
+
+- **Bron:** OpenStreetMap via de Overpass API (gratis, ODbL; bronvermelding staat op de pagina).
+- **Automatisch:** pg_cron-job `discover-venues-hourly` roept elk uur de Edge Function
+  `discover-venues` aan. Die haalt restaurants op binnen 4 km van Utrecht Centraal en 2,5 km van
+  Vianen, maar slaat over als er in de laatste 20 uur al een geslaagde ronde was. Overpass-servers
+  zijn soms overbelast; dan probeert de job het een uur later opnieuw. Plekken blijven 21 dagen
+  zichtbaar en worden na 60 dagen zonder update verwijderd.
+- **Status bekijken:** `select * from discover_runs order by id desc limit 5;`
+- **Handmatig starten:** `curl -X POST https://ukzmcgpkzbgrdvlvtzqh.supabase.co/functions/v1/discover-venues`
+  (doet niets als er minder dan 20 uur geleden een geslaagde ronde was).
+- **Ranking:** deterministisch in `src/features/suggestions/ranker.ts` (getest): nieuw voor de
+  groep, andere keuken dan eerdere etentjes en de kandidaten, seizoen, terras (lente/zomer),
+  loopafstand tot Utrecht Centraal of in Vianen, vegetarisch, en de 👍/👎-stemmen.
+- **Geen Google-API:** sterren en reviews staan achter de knop "Google-reviews bekijken" (gewone
+  Google Maps-link). Foto's zijn gestileerde keukenillustraties. Google Places kan later worden
+  toegevoegd (vereist Google Cloud met betaalgegevens).
+- **Kaart:** Leaflet met OpenStreetMap-tegels (donker gemaakt met CSS). Geen sleutel nodig.
+- **Tips van de beheerder:** toevoegen via SQL in `venue_suggestions` met `source = 'admin'`,
+  `status = 'approved'` (zie migration `suggestion_votes`). Ideeën van deelnemers komen binnen als
+  `pending` en worden goedgekeurd in `#/admin` → Suggesties.
+- **Stemmen:** één 👍 of 👎 per ingelogde persoon per plek (`suggestion_votes`), aanpasbaar en in
+  te trekken; los van de formele stemming voor een etentje.
+
 ## 3. Noodstop bij spam
 
 `#/admin` → **Instellingen** → _Inzendingen uitzetten_. Lezen blijft werken. Of via SQL:
@@ -101,7 +125,7 @@ begrenst het aantal codes per e-mailadres en per uur.
 
 - Migrations staan in `supabase/migrations/` en zijn al toegepast op het project. Nieuwe wijziging:
   nieuw bestand met tijdstempel, toepassen via `supabase db push` (CLI) of de SQL Editor.
-- Beveiligingstests: voer `supabase/tests/rls_negative.sql` uit in de SQL Editor. Elke rij moet
+- Beveiligingstests: voer `supabase/tests/rls_negative.sql` en `supabase/tests/votes.sql` uit in de SQL Editor. Elke rij moet
   `ok = true` zijn; het script rolt alles terug.
 - Nieuwe databasefuncties krijgen standaard **geen** EXECUTE-rechten (zie migration
   `fix_function_grants`). Geef ze expliciet aan `authenticated` of `anon` als dat de bedoeling is,

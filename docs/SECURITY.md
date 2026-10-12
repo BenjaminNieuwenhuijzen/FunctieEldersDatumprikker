@@ -4,9 +4,13 @@ Publieke repo en publieke URL zijn prima. Open schrijfrechten en publieke persoo
 
 ## Model
 
-- **Lezen (iedereen)**: uitsluitend 6 security-definer RPC's met niet-persoonlijke data:
-  `get_active_event`, `get_public_event`, `get_upcoming_venues`, `get_public_tally` (alleen
-  aantallen), `get_public_visits`, `get_public_settings`. Concept-events zijn niet zichtbaar.
+- **Lezen (iedereen)**: uitsluitend 10 security-definer RPC's met niet-persoonlijke data:
+  `get_active_event`, `get_public_event`, `get_upcoming_venues`, `get_public_tally` (aantallen),
+  `get_public_visits`, `get_public_settings`, `get_discover_places`, `get_discover_meta`,
+  `get_public_suggestions` (alleen goedgekeurd) en `get_vote_tallies` (aantallen).
+  Concept-events zijn niet zichtbaar.
+- **Stemmen op suggesties**: `vote_suggestion` met `auth.uid()`; de primaire sleutel
+  (gebruiker, doel) garandeert één stem per persoon per plek.
 - **Stemmen**: alleen met een Supabase-sessie van een **bevestigd e-mailadres** (eenmalige code
   per mail). RPC `cast_vote` gebruikt `auth.uid()`; één deelnemer per e-mailadres per event
   (unique constraint), wijzigen is een upsert en telt dus nooit dubbel.
@@ -57,5 +61,5 @@ De beheerder ziet e-mailadressen in het aanwezigheidsoverzicht en kan duplicaten
 
 ## Tests
 
-`supabase/tests/rls_negative.sql`: 35 controles (anon, ingelogde gebruiker, onbevestigd adres,
+`supabase/tests/rls_negative.sql` (35) en `supabase/tests/votes.sql` (16) controles (anon, ingelogde gebruiker, onbevestigd adres,
 beheerder, noodstop, gesloten poll, functierechten). Laatste run: alle 35 geslaagd.
