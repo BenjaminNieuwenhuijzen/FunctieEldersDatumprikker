@@ -1,25 +1,33 @@
 # Takenlijst
 
-Legenda: ✅ klaar en werkend · 🧪 UI/mock · ⏳ wacht op externe configuratie
+Legenda: ✅ klaar en getest · 🧪 gebouwd, nog niet end-to-end getest · ⏳ wacht op handmatige configuratie
 
 ## Fase A — Repo en designfundament
 
-- ✅ Repo-inspectie, base path `/FunctieEldersDatumprikker/`
-- ✅ Docs: ARCHITECTURE, SECURITY, DESIGN
-- ✅ Vite + React + TS strict + Tailwind v4 + HashRouter
-- ✅ Lint, Prettier, Vitest
-- 🧪 Design-systempagina `#/design` met voorbeelddata
-- 🧪 Home, event, ontdek, geschiedenis, admin-placeholder
-- ✅ GitHub Actions Pages-workflow (⏳ Pages Source = GitHub Actions instellen)
+- ✅ Repo, base path `/FunctieEldersDatumprikker/`, Pages-workflow, lint/format/tests
+- ✅ Design system `#/design`, responsive layout (geen horizontaal scrollen op 375px)
 
 ## Fase B — Echte datumprikker
 
-- ⏳ Supabase-project + Turnstile aanmaken (zie README)
-- Migrations + RLS + RLS-tests
-- Edge Functions: submit-vote, update-vote
-- `supabaseApi`, admin-login, eventbeheer, poll sluiten
-- Aggregaten via RPC
+- ✅ Schema + RLS + RPC's in Supabase (migrations in `supabase/migrations/`)
+- ✅ 35 database-beveiligingstests geslaagd
+- ✅ Publieke pagina's lezen echte data (home, event, geschiedenis)
+- 🧪 Inloggen met e-mailcode → stemmen → wijzigen (⏳ SMTP via Resend, zie OPERATIONS 1a/1b)
+- 🧪 Beheer: etentjes, datums, restaurants, openen/sluiten, aanwezigheid, CSV, afronden,
+  suggesties modereren, noodstop, opschonen (⏳ eerste beheerder, OPERATIONS 1c)
+- ⏳ Turnstile (optioneel)
 
-## Fase C — Groepsarchief · Fase D — Aanbevelingen · Fase E — Afwerking
+## Fase C — Groepsarchief
 
-Zie implementatieplan.
+- ✅ Tabel `visits` + publieke tijdlijn; eerste bezoek (Daebak, 27-03-2026) vastgelegd
+- Ontdekpagina met goedgekeurde ideeën + "lijkt me leuk / niks"-reacties
+- Optionele foto's (Supabase Storage)
+
+## Fase D — Aanbevelingen · Fase E — Afwerking
+
+Zie implementatieplan. Event-specifieke uitsluitingen (FoodExplore, Daebak, La Cubanita) staan al
+in `event_exclusions` voor de ranker.
+
+Context voor de ranker (locatie/reistijd): de groep bestaat uit collega's en oud-collega's van
+Unified, later overgenomen door Previder. Previder zit in **Vianen**; een deel van de groep werkt
+daar nog. Ankerpunten voor "goed bereikbaar": Utrecht (centrum/station) en Vianen.

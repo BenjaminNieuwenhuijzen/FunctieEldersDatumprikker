@@ -1,19 +1,24 @@
 import { Link } from 'react-router-dom';
-import { api } from '../../lib/api';
+import { api } from '../../lib/supabaseApi';
 import { describeDate } from '../../lib/format';
 import { EmptyState, RouteLine, VenueCard } from '../../components/ui';
 import { ErrorNote, Loading, useAsync } from '../../lib/useAsync';
+import { Timeline } from '../history/Timeline';
 
 export function Home() {
-  const state = useAsync(
-    async () => ({ event: await api.getActiveEvent(), venues: await api.listVenues() }),
-    [],
-  );
+  const state = useAsync(async () => {
+    const [event, venues, visits] = await Promise.all([
+      api.getActiveEvent(),
+      api.listVenues(),
+      api.listVisits(),
+    ]);
+    return { event, venues, visits };
+  }, []);
 
   return (
     <main id="main" className="mx-auto max-w-6xl px-5">
       <section className="reveal pb-16 pt-10 sm:pt-20">
-        <p className="eyebrow">Oud-collega's · regio Utrecht</p>
+        <p className="eyebrow">Collega's en oud-collega's · regio Utrecht</p>
         <h1 className="h-display mt-5">
           Functie
           <br />
@@ -38,7 +43,7 @@ export function Home() {
                   <h3 className="text-3xl">{state.data.event.title}</h3>
                   <ul className="mt-4 flex flex-wrap gap-2">
                     {state.data.event.dateOptions.map((d) => (
-                      <li key={d.id} className="chip capitalize">
+                      <li key={d.id} className="chip">
                         {describeDate(d)}
                       </li>
                     ))}
@@ -56,15 +61,15 @@ export function Home() {
                     </Link>
                   }
                 >
-                  Zodra er datums zijn geprikt, kun je hier meestemmen. Je hoeft geen account aan te
-                  maken.
+                  Zodra er datums zijn geprikt, kun je hier meestemmen. Je bevestigt alleen even je
+                  e-mailadres met een code; een wachtwoord of account is niet nodig.
                 </EmptyState>
               )}
             </div>
           </section>
 
           <section aria-labelledby="venues-h" className="pb-20">
-            <p className="eyebrow">Kandidaten eerste etentje</p>
+            <p className="eyebrow">Kandidaten volgende etentje</p>
             <h2 id="venues-h" className="h-section mt-2">
               Waar gaan we eten?
             </h2>
@@ -80,17 +85,25 @@ export function Home() {
             <h2 id="hist-h" className="h-section mt-2">
               De route tot nu toe
             </h2>
-            <div className="mt-8">
-              <EmptyState
-                title="Nog geen etentjes vastgelegd"
-                action={
-                  <Link to="/geschiedenis" className="btn">
-                    Naar de geschiedenis
-                  </Link>
-                }
-              >
-                Na elk etentje legt de beheerder datum en restaurant vast. Dan groeit hier de route.
-              </EmptyState>
+            <div className="mt-10">
+              {state.data.visits.length === 0 ? (
+                <EmptyState
+                  title="Nog geen etentjes vastgelegd"
+                  action={
+                    <Link to="/geschiedenis" className="btn">
+                      Naar de geschiedenis
+                    </Link>
+                  }
+                >
+                  Na elk etentje legt de beheerder datum en restaurant vast. Dan groeit hier de
+                  route.
+                </EmptyState>
+              ) : (
+                <Timeline
+                  visits={state.data.visits}
+                  nextLabel={state.data.event?.title ?? 'Nog te kiezen'}
+                />
+              )}
             </div>
           </section>
         </>

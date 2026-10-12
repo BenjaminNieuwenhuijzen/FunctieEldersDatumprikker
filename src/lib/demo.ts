@@ -1,6 +1,6 @@
 import { tallyVotes, type StoredVote } from './aggregate';
 import { firstEventVenues } from './api';
-import type { DateOption, PollEvent, PublicTally, VotePayload, VoteReceipt } from './types';
+import type { DateOption, PollEvent, PublicTally, VotePayload } from './types';
 
 /**
  * ALLEEN voor `#/design`. Voorbeelddata om de UI te tonen; nooit als echte poll gebruiken.
@@ -46,10 +46,9 @@ export function createDemo() {
     getTally(): PublicTally {
       return tallyVotes(votes, dateOptions, venueIds);
     },
-    async submitVote(_eventId: string, p: VotePayload): Promise<VoteReceipt> {
+    async submitVote(_eventId: string, p: VotePayload): Promise<void> {
       await new Promise((r) => setTimeout(r, 500));
       votes.push({ availability: p.availability, venueChoice: p.venueChoice });
-      return { editToken: 'demo-geen-echte-link' };
     },
   };
 }

@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { Home } from '../features/events/Home';
 import { EventPage } from '../features/events/EventPage';
-import { EditPage } from '../features/availability/EditPage';
 import { Discover } from '../features/suggestions/Discover';
 import { History } from '../features/history/History';
 import { Admin } from '../features/admin/Admin';
@@ -45,7 +44,7 @@ export function App() {
       >
         Naar inhoud
       </a>
-      <header className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-5">
+      <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-1 px-5 py-4 sm:py-5">
         <NavLink
           to="/"
           className="font-display whitespace-nowrap text-xl font-extrabold tracking-tight"
@@ -53,14 +52,14 @@ export function App() {
           Functie<span className="text-coral"> Elders</span>
         </NavLink>
         <nav aria-label="Hoofdmenu">
-          <ul className="flex gap-1 sm:gap-3">
+          <ul className="-mx-2 flex sm:mx-0 sm:gap-3">
             {nav.map((n) => (
               <li key={n.to}>
                 <NavLink
                   to={n.to}
                   end={n.end}
                   className={({ isActive }) =>
-                    `inline-flex min-h-11 items-center rounded-full px-3 text-sm sm:text-base ${isActive ? 'text-coral' : 'text-mist hover:text-paper'}`
+                    `inline-flex min-h-11 items-center rounded-full px-2 text-sm sm:px-3 sm:text-base ${isActive ? 'text-coral' : 'text-mist hover:text-paper'}`
                   }
                 >
                   {n.label}
@@ -73,7 +72,6 @@ export function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/event/:slug" element={<EventPage />} />
-        <Route path="/edit/:token" element={<EditPage />} />
         <Route path="/ontdek" element={<Discover />} />
         <Route path="/geschiedenis" element={<History />} />
         <Route path="/admin" element={<Admin />} />

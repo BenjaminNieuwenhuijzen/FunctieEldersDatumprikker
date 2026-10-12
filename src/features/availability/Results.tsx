@@ -1,5 +1,5 @@
 import { ResultBar } from '../../components/ui';
-import { formatDateParts } from '../../lib/format';
+import { capFirst, formatDateParts } from '../../lib/format';
 import type { PollEvent, PublicTally } from '../../lib/types';
 
 /** Geaggregeerde tussenstand. Toont nooit namen of individuele antwoorden. */
@@ -22,9 +22,7 @@ export function Results({ event, tally }: { event: PollEvent; tally: PublicTally
             const t = tally.dates[d.id] ?? { yes: 0, maybe: 0, no: 0 };
             return (
               <li key={d.id}>
-                <p className="mb-2 font-semibold capitalize">
-                  {formatDateParts(d.localDate).short}
-                </p>
+                <p className="mb-2 font-semibold">{capFirst(formatDateParts(d.localDate).short)}</p>
                 <div className="space-y-1.5">
                   <ResultBar label="Ja" value={t.yes} max={maxDate} tone="yes" />
                   <ResultBar label="Misschien" value={t.maybe} max={maxDate} tone="maybe" />

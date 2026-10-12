@@ -94,13 +94,9 @@ export function DesignSystem() {
         </h2>
         <p className="mb-5 mt-2 text-mist">Werkt echt in je browser, maar slaat niets op.</p>
         <VoteForm
-          demo
           event={demo.event}
-          onSubmit={async (p) => {
-            const r = await demo.submitVote(demo.event.id, p);
-            setTally(demo.getTally());
-            return r;
-          }}
+          onSubmit={(p) => demo.submitVote(demo.event.id, p)}
+          onSaved={() => setTally(demo.getTally())}
         />
       </section>
 

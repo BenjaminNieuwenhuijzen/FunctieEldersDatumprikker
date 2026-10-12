@@ -24,12 +24,8 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test
+      # Publieke config (Supabase-URL, publishable key, Turnstile site key) staat in .env.production.
       - run: npm run build
-        env:
-          # Publieke waarden (repository variables, geen secrets). Leeg = geen backend gekoppeld.
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
-          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

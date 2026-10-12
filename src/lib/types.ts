@@ -59,6 +59,11 @@ export interface VotePayload {
   suggestion?: { name: string; reason: string; url?: string };
 }
 
-export interface VoteReceipt {
-  editToken: string;
+/** Bevestigd bezoek (historie). */
+export interface Visit {
+  id: string;
+  visitedOn: string;
+  notes?: string;
+  ratingSummary?: number;
+  venue: Venue;
 }

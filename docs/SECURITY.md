@@ -2,46 +2,60 @@
 
 Publieke repo en publieke URL zijn prima. Open schrijfrechten en publieke persoonsdata niet.
 
+## Model
+
+- **Lezen (iedereen)**: uitsluitend 6 security-definer RPC's met niet-persoonlijke data:
+  `get_active_event`, `get_public_event`, `get_upcoming_venues`, `get_public_tally` (alleen
+  aantallen), `get_public_visits`, `get_public_settings`. Concept-events zijn niet zichtbaar.
+- **Stemmen**: alleen met een Supabase-sessie van een **bevestigd e-mailadres** (eenmalige code
+  per mail). RPC `cast_vote` gebruikt `auth.uid()`; één deelnemer per e-mailadres per event
+  (unique constraint), wijzigen is een upsert en telt dus nooit dubbel.
+- **Eigen stem lezen**: `get_my_vote` geeft alleen de stem van de ingelogde gebruiker zelf.
+- **Beheer**: dezelfde e-maillogin; rechten uit tabel `admins`, afgedwongen met RLS-policies
+  (`is_admin()`) en checks in `admin_list_participants` / `purge_vote_details`. De React-UI
+  verbergt alleen knoppen; dat is geen beveiliging.
+- **Ruwe tabellen**: RLS aan op alles; anon heeft er geen grants op; ingelogde niet-beheerders
+  zien 0 rijen en kunnen niets wijzigen.
+- **Functierechten**: nieuwe functies krijgen standaard geen EXECUTE (ook niet voor PUBLIC).
+
 ## Secrets
 
-| Waarde                             | Waar                         | Publiek?            |
-| ---------------------------------- | ---------------------------- | ------------------- |
-| `VITE_SUPABASE_URL`                | `.env` / GitHub Actions var  | ja                  |
-| `VITE_SUPABASE_PUBLISHABLE_KEY`    | `.env` / GitHub Actions var  | ja (mits RLS klopt) |
-| `VITE_TURNSTILE_SITE_KEY`          | `.env` / GitHub Actions var  | ja                  |
-| Supabase service-role key          | alleen Edge Function secrets | **nee**             |
-| Turnstile secret                   | alleen Edge Function secrets | **nee**             |
-| Places-API-key (optioneel, Fase D) | alleen Edge Function secrets | **nee**             |
+| Waarde                           | Waar                                   | Publiek?      |
+| -------------------------------- | -------------------------------------- | ------------- |
+| Supabase URL + publishable key   | `.env.production` (in repo)            | ja, by design |
+| Turnstile site key               | `.env.production`                      | ja            |
+| Turnstile secret                 | Supabase Auth → Attack Protection      | **nee**       |
+| Resend API key (SMTP-wachtwoord) | Supabase Auth → SMTP Settings          | **nee**       |
+| Service-role key                 | alleen Edge Function-omgeving          | **nee**       |
+| Database-wachtwoord              | Supabase-dashboard / wachtwoordmanager | **nee**       |
 
-`.env` staat in `.gitignore`. Alles met `VITE_` komt in de build en is dus publiek.
+## Dreigingen en maatregelen
 
-## Dreigingsmodel en maatregelen (Fase B)
-
-| Risico                       | Maatregel                                                                                  |
-| ---------------------------- | ------------------------------------------------------------------------------------------ |
-| Spam/bots                    | Turnstile (server-side geverifieerd), rate limiting, quota, noodstop                       |
-| Leesbare individuele stemmen | RLS deny op `participants`, `availability_votes`, `venue_votes`; alleen aggregaten via RPC |
-| Stemmen van anderen wijzigen | Opaque edit-token; alleen SHA-256-hash opgeslagen; vergelijking server-side                |
-| Admin-misbruik               | Supabase JWT + rol-check in DB/Edge Function; geen `isAdmin` in React                      |
-| Stemmen op gesloten poll     | Statuscontrole in Edge Function én in DB-constraint/trigger                                |
-| Token-lekkage                | Geen tokens in logs/analytics; `Referrer-Policy: no-referrer`                              |
-| Dubbel stemmen               | Niet volledig af te dwingen zonder login; admin beoordeelt duplicaten                      |
+| Risico                          | Maatregel                                                                                       |
+| ------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Spam / bots                     | E-mailverificatie, Auth-rate-limits, optioneel Turnstile, 30 stemacties/uur/gebruiker, noodstop |
+| Individuele stemmen uitlezen    | Geen leesrechten op ruwe tabellen; publiek alleen aggregaten                                    |
+| Stem van een ander wijzigen     | Upsert op `auth.uid()`; geen ID's of tokens in URL's                                            |
+| Admin-misbruik                  | Rol in database; JWT verplicht; RLS op elke tabel                                               |
+| Stemmen op gesloten poll        | Statuscheck met rij-lock in `cast_vote`                                                         |
+| Kwaadaardige links in ideeën    | DB-constraint: alleen `http(s)://`; links met `rel="noopener noreferrer"`                       |
+| CSV-formule-injectie bij export | Cellen die met `= + - @` beginnen worden ge-escaped                                             |
+| Lekken via referrer             | `<meta name="referrer" content="no-referrer">`                                                  |
 
 ## Eerlijke beperking
 
-Zonder accounts is "één stem per persoon" **niet** af te dwingen. De bewerklink voorkomt dat
-dezelfde deelnemer dubbel telt, niet dat iemand onder twee namen stemt. Dit staat ook in de UI en
-README.
+Eén stem per **e-mailadres**, niet per persoon: iemand met twee adressen kan twee keer stemmen.
+De beheerder ziet e-mailadressen in het aanwezigheidsoverzicht en kan duplicaten verwijderen.
 
 ## Privacy
 
-- Verzameld: schermnaam, beschikbaarheid, restaurantkeuze. Geen e-mail, geen cookies, geen analytics.
-- Individuele beschikbaarheid is nooit publiek; alleen geaggregeerd.
-- Retentie: stemdetails worden 90 dagen na afronding verwijderd (operationele handeling of
-  geplande job; zie `OPERATIONS.md`). Niet-persoonlijke bezoekhistorie blijft.
-- Privacytekst noemt provider en regio zodra Supabase daadwerkelijk is geconfigureerd.
+- Verzameld: e-mailadres, schermnaam, beschikbaarheid, restaurantkeuze, optioneel een idee.
+- Nooit publiek; alleen beheerders zien namen en e-mailadressen.
+- Geen cookies voor tracking, geen analytics. De inlogsessie staat in `localStorage` van de site.
+- Data staat bij Supabase in de EU (Frankfurt); mails gaan via Resend.
+- Retentie: opschonen 90 dagen na afronding (zie `OPERATIONS.md`).
 
-## Tests (verplicht vóór productie)
+## Tests
 
-Negatieve RLS-tests: anon kan niet lezen/schrijven op ruwe tabellen; fout token kan niet
-bewerken; gesloten poll weigert; niet-admin krijgt 403 op admin-endpoints.
+`supabase/tests/rls_negative.sql`: 35 controles (anon, ingelogde gebruiker, onbevestigd adres,
+beheerder, noodstop, gesloten poll, functierechten). Laatste run: alle 35 geslaagd.

@@ -20,7 +20,45 @@ export function formatDateParts(localDate: string) {
   };
 }
 
+/** Eerste letter hoofdletter (Nederlandse maanden/dagen blijven verder klein). */
+export const capFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 export function describeDate(o: DateOption): string {
   const p = formatDateParts(o.localDate);
-  return `${p.long}${o.startTime ? ` · ${o.startTime}` : ''}`;
+  return `${capFirst(p.long)}${o.startTime ? ` · ${o.startTime}` : ''}`;
+}
+
+/**
+ * Lokale datum + tijd in Europe/Amsterdam → ISO-tijdstip (UTC). Houdt rekening met zomer-/wintertijd.
+ */
+export function amsterdamToIso(localDate: string, time: string): string {
+  const [y, m, d] = localDate.split('-').map(Number) as [number, number, number];
+  const [hh, mm] = time.split(':').map(Number) as [number, number];
+  const wanted = Date.UTC(y, m - 1, d, hh, mm);
+  // Bepaal de offset van Amsterdam rond dat moment en corrigeer (twee iteraties is genoeg rond DST).
+  let guess = wanted;
+  for (let i = 0; i < 2; i++) {
+    const parts = Object.fromEntries(
+      new Intl.DateTimeFormat('en-GB', {
+        timeZone: TIMEZONE,
+        hourCycle: 'h23',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+        .formatToParts(new Date(guess))
+        .map((p) => [p.type, p.value]),
+    );
+    const shown = Date.UTC(
+      +parts.year!,
+      +parts.month! - 1,
+      +parts.day!,
+      +parts.hour!,
+      +parts.minute!,
+    );
+    guess += wanted - shown;
+  }
+  return new Date(guess).toISOString();
 }

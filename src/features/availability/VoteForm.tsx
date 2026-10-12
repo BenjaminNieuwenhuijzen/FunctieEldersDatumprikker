@@ -1,12 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { formatDateParts } from '../../lib/format';
-import {
-  NO_PREFERENCE,
-  type Answer,
-  type PollEvent,
-  type VotePayload,
-  type VoteReceipt,
-} from '../../lib/types';
+import { capFirst, formatDateParts } from '../../lib/format';
+import { NO_PREFERENCE, type Answer, type PollEvent, type VotePayload } from '../../lib/types';
 import { LIMITS, validateVote, type VoteErrors } from '../../lib/validators';
 
 const ANSWERS: { value: Answer; label: string; icon: string; cls: string }[] = [
@@ -19,27 +13,28 @@ type Phase = 'idle' | 'sending' | 'done';
 
 interface Props {
   event: PollEvent;
-  onSubmit: (payload: VotePayload) => Promise<VoteReceipt>;
-  /** Alleen demo: geen echte bewerklink tonen. */
-  demo?: boolean;
+  onSubmit: (payload: VotePayload) => Promise<void>;
+  /** Na succesvol opslaan, bijv. om de tussenstand te verversen. */
+  onSaved?: () => void;
+  /** Bestaande stem: het formulier wordt dan een wijziging. */
+  initial?: VotePayload | null;
+  /** Vooraf ingevulde naam (bijv. van een eerder etentje). */
+  defaultName?: string;
 }
 
-export function editLink(token: string): string {
-  return `${location.origin}${import.meta.env.BASE_URL}#/edit/${token}`;
-}
-
-export function VoteForm({ event, onSubmit, demo = false }: Props) {
-  const [name, setName] = useState('');
-  const [availability, setAvailability] = useState<Record<string, Answer>>({});
-  const [venueChoice, setVenueChoice] = useState('');
+export function VoteForm({ event, onSubmit, onSaved, initial, defaultName = '' }: Props) {
+  const [editing, setEditing] = useState(!!initial);
+  const [name, setName] = useState(initial?.displayName ?? defaultName);
+  const [availability, setAvailability] = useState<Record<string, Answer>>(
+    initial?.availability ?? {},
+  );
+  const [venueChoice, setVenueChoice] = useState<string>(initial?.venueChoice ?? '');
   const [sName, setSName] = useState('');
   const [sReason, setSReason] = useState('');
   const [sUrl, setSUrl] = useState('');
   const [errors, setErrors] = useState<VoteErrors>({});
   const [phase, setPhase] = useState<Phase>('idle');
   const [failure, setFailure] = useState('');
-  const [receipt, setReceipt] = useState<VoteReceipt | null>(null);
-  const [copied, setCopied] = useState(false);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -56,52 +51,41 @@ export function VoteForm({ event, onSubmit, demo = false }: Props) {
     );
     setErrors(found);
     if (Object.keys(found).length) return;
-    if (!sName) delete payload.suggestion;
+    if (!sName.trim()) delete payload.suggestion;
     setPhase('sending');
     setFailure('');
     try {
-      setReceipt(await onSubmit(payload));
+      await onSubmit(payload);
       setPhase('done');
+      setSName('');
+      setSReason('');
+      setSUrl('');
+      onSaved?.();
     } catch (err) {
       setFailure(err instanceof Error ? err.message : 'Er ging iets mis. Probeer het opnieuw.');
       setPhase('idle');
     }
   }
 
-  if (phase === 'done' && receipt) {
-    const link = editLink(receipt.editToken);
+  if (phase === 'done') {
     return (
       <div className="reveal rounded-3xl border border-yes/60 bg-ink p-6 sm:p-10" role="status">
-        <p className="eyebrow text-yes">Stem ontvangen</p>
+        <p className="eyebrow text-yes">{editing ? 'Wijziging opgeslagen' : 'Stem ontvangen'}</p>
         <h3 className="h-section mt-2">Bedankt, {name.trim()}.</h3>
         <p className="mt-4 max-w-xl">
-          Bewaar deze persoonlijke link. Daarmee kun je je antwoord later aanpassen zonder dubbel te
-          tellen. Raak je de link kwijt, dan kan alleen de beheerder je stem herstellen.
+          Je telt één keer mee. Wil je later iets aanpassen? Kom terug naar deze pagina en log in
+          met hetzelfde e-mailadres.
         </p>
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-          <input
-            readOnly
-            className="field font-mono text-sm"
-            value={link}
-            aria-label="Je persoonlijke bewerklink"
-            onFocus={(e) => e.currentTarget.select()}
-          />
-          <button
-            type="button"
-            className="btn btn-primary shrink-0"
-            onClick={async () => {
-              try {
-                await navigator.clipboard.writeText(link);
-                setCopied(true);
-              } catch {
-                setCopied(false);
-              }
-            }}
-          >
-            {copied ? 'Gekopieerd ✓' : 'Kopieer link'}
-          </button>
-        </div>
-        {demo && <p className="mt-3 text-sm text-mist">Demo: deze link werkt niet echt.</p>}
+        <button
+          type="button"
+          className="btn mt-6"
+          onClick={() => {
+            setEditing(true);
+            setPhase('idle');
+          }}
+        >
+          Nog iets aanpassen
+        </button>
       </div>
     );
   }
@@ -148,8 +132,8 @@ export function VoteForm({ event, onSubmit, demo = false }: Props) {
               >
                 <p className="mb-3 flex items-baseline gap-3">
                   <span className="font-display text-4xl font-extrabold">{p.day}</span>
-                  <span className="capitalize">
-                    {p.weekday}{' '}
+                  <span>
+                    {capFirst(p.weekday)}{' '}
                     <span className="text-mist">
                       {p.month}
                       {d.startTime ? ` · ${d.startTime}` : ''}
@@ -203,43 +187,45 @@ export function VoteForm({ event, onSubmit, demo = false }: Props) {
         {errors.venue && <p className="error-text mt-2">{errors.venue}</p>}
       </fieldset>
 
-      <details className="rounded-2xl border border-line bg-ink p-4">
-        <summary className="cursor-pointer font-semibold">
-          Heb je zelf een restaurantidee? (optioneel)
-        </summary>
-        <p className="mt-2 text-sm text-mist">
-          Dit is een suggestie. Het wordt niet automatisch een optie in deze poll; de beheerder
-          beoordeelt het.
-        </p>
-        <div className="mt-4 grid gap-3">
-          <input
-            className="field"
-            aria-label="Naam restaurant"
-            placeholder="Naam restaurant"
-            maxLength={LIMITS.suggestionName}
-            value={sName}
-            onChange={(e) => setSName(e.target.value)}
-          />
-          <input
-            className="field"
-            aria-label="Waarom dit restaurant?"
-            placeholder="Waarom past het bij ons?"
-            maxLength={LIMITS.reason}
-            value={sReason}
-            onChange={(e) => setSReason(e.target.value)}
-          />
-          <input
-            className="field"
-            aria-label="Link (https://…)"
-            placeholder="Link (https://…)"
-            inputMode="url"
-            maxLength={LIMITS.url}
-            value={sUrl}
-            onChange={(e) => setSUrl(e.target.value)}
-          />
-        </div>
-        {errors.suggestion && <p className="error-text mt-2">{errors.suggestion}</p>}
-      </details>
+      {!editing && (
+        <details className="rounded-2xl border border-line bg-ink p-4">
+          <summary className="cursor-pointer font-semibold">
+            Heb je zelf een restaurantidee? (optioneel)
+          </summary>
+          <p className="mt-2 text-sm text-mist">
+            Dit is een suggestie. Het wordt niet automatisch een optie in deze poll; de beheerder
+            beoordeelt het.
+          </p>
+          <div className="mt-4 grid gap-3">
+            <input
+              className="field"
+              aria-label="Naam restaurant"
+              placeholder="Naam restaurant"
+              maxLength={LIMITS.suggestionName}
+              value={sName}
+              onChange={(e) => setSName(e.target.value)}
+            />
+            <input
+              className="field"
+              aria-label="Waarom dit restaurant?"
+              placeholder="Waarom past het bij ons?"
+              maxLength={LIMITS.reason}
+              value={sReason}
+              onChange={(e) => setSReason(e.target.value)}
+            />
+            <input
+              className="field"
+              aria-label="Link (https://…)"
+              placeholder="Link (https://…)"
+              inputMode="url"
+              maxLength={LIMITS.url}
+              value={sUrl}
+              onChange={(e) => setSUrl(e.target.value)}
+            />
+          </div>
+          {errors.suggestion && <p className="error-text mt-2">{errors.suggestion}</p>}
+        </details>
+      )}
 
       <div>
         {failure && (
@@ -248,12 +234,18 @@ export function VoteForm({ event, onSubmit, demo = false }: Props) {
           </p>
         )}
         <button className="btn btn-primary" disabled={phase === 'sending' || closed}>
-          {closed ? 'Poll is gesloten' : phase === 'sending' ? 'Versturen…' : 'Verstuur mijn stem'}
+          {closed
+            ? 'Poll is gesloten'
+            : phase === 'sending'
+              ? 'Versturen…'
+              : editing
+                ? 'Wijziging opslaan'
+                : 'Verstuur mijn stem'}
         </button>
         <p id="privacy-note" className="mt-4 max-w-xl text-sm text-mist">
-          Je naam en antwoorden zijn niet publiek: iedereen ziet alleen totalen. Er is geen account;
-          dat betekent ook dat "één stem per persoon" niet waterdicht is. De beheerder kan dubbele
-          inzendingen opruimen.
+          Je naam en antwoorden zijn niet publiek: iedereen ziet alleen totalen. Je telt één keer
+          mee per e-mailadres. Iemand met twee e-mailadressen kan in theorie twee keer stemmen; de
+          beheerder kan dubbele inzendingen opruimen.
         </p>
       </div>
     </form>

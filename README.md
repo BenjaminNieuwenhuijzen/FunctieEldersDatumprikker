@@ -1,55 +1,55 @@
 # Functie Elders — Datumprikker
 
-Een kleine, herbruikbare groepsapp voor etentjes met oud-collega's in de regio Utrecht:
-datumprikken, restaurantstemming, geschiedenis en suggesties.
+Een kleine, herbruikbare groepsapp voor etentjes met collega's en oud-collega's in de regio
+Utrecht: datumprikken, restaurantstemming, geschiedenis en (later) aanbevelingen.
 
 Productie: <https://benjaminnieuwenhuijzen.github.io/FunctieEldersDatumprikker/>
 
 ## Status
 
-| Onderdeel                                                      | Status                                                        |
-| -------------------------------------------------------------- | ------------------------------------------------------------- |
-| Frontend, design system (`#/design`), routes, lege/laad-states | werkt (lokaal getest)                                         |
-| Stemformulier + validatie + aggregatie                         | werkt in de UI; **opslag nog niet**                           |
-| Opslag, bewerklinks, admin, Edge Functions, Turnstile          | **Fase B, nog niet gebouwd** (wacht op Supabase-configuratie) |
-| Geschiedenis, suggesties, aanbevelingen                        | Fase C/D, alleen lege schermen                                |
+| Onderdeel                                                         | Status                                   |
+| ----------------------------------------------------------------- | ---------------------------------------- |
+| Frontend, design system (`#/design`), responsive, lege/laadstaten | werkt                                    |
+| Database, RLS, publieke lees-RPC's, geschiedenis-tijdlijn         | werkt (35 beveiligingstests geslaagd)    |
+| Inloggen met e-mailcode, stemmen, wijzigen                        | gebouwd; werkt zodra SMTP is ingesteld   |
+| Beheer (etentjes, datums, restaurants, aanwezigheid, afronden)    | gebouwd; werkt zodra er een beheerder is |
+| Ontdekpagina met ideeën en reacties, aanbevelingen                | Fase C/D                                 |
 
-Zonder Supabase toont de site eerlijk "de datums volgen nog". Er zijn geen verzonnen datums.
+## Hoe het werkt
+
+- Deelnemers bevestigen hun e-mailadres met een eenmalige code (geen wachtwoord). Daarna kiezen
+  ze per datum Ja / Misschien / Nee en een restaurant of "geen voorkeur". Eén stem per
+  e-mailadres; terugkomen en opnieuw inloggen = aanpassen.
+- Iedereen ziet alleen totalen. Namen en e-mailadressen zijn alleen zichtbaar voor beheerders.
+- Beheer via `#/admin` met dezelfde e-maillogin; rechten staan in de database.
+
+**Eerlijke beperking:** één stem per e-mailadres, niet per persoon. De beheerder kan duplicaten
+opruimen.
 
 ## Lokaal draaien
 
 ```bash
 npm install
 npm run dev        # http://localhost:5173/FunctieEldersDatumprikker/
-npm test           # unit tests
+npm test
 npm run lint
 npm run build
 ```
 
-Kopieer `.env.example` naar `.env` voor Fase B. Alles met `VITE_` is publiek; zet daar nooit geheimen in.
+`.env.development` en `.env.production` bevatten alleen publieke waarden (Supabase-URL en
+publishable key). Zet daar nooit geheimen in.
 
-## Deployment (GitHub Pages)
+## Deployment
 
-1. Repo → Settings → Pages → **Source: GitHub Actions** (eenmalig, handmatig).
-2. Push naar `main`; `.github/workflows/deploy.yml` test, bouwt en publiceert.
-3. Later: repository _variables_ (geen secrets) `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`,
-   `VITE_TURNSTILE_SITE_KEY`.
+Push naar `main` → GitHub Actions test, bouwt en publiceert naar Pages (Settings → Pages →
+Source: GitHub Actions). Routing via `HashRouter`, dus verversen werkt op elke pagina.
 
-Routing gebruikt `HashRouter`, dus verversen werkt op elk pad.
+## Handmatige stappen
 
-## Fase B: wat jij handmatig moet doen
-
-1. Supabase-project aanmaken (regio EU). Noteer project-URL en _publishable key_.
-2. Cloudflare Turnstile-widget aanmaken; site key is publiek, secret komt in Supabase function secrets.
-3. Admin-gebruiker aanmaken in Supabase Auth.
-4. Het database-wachtwoord blijft in het Supabase-dashboard / je wachtwoordmanager; het hoort
-   nooit in deze repo of in een chat.
-
-## Eerlijke beperking
-
-Zonder accounts is "één stem per persoon" niet af te dwingen. Een persoonlijke bewerklink voorkomt
-dubbel tellen van dezelfde deelnemer; de beheerder kan duplicaten opruimen.
+Zie [docs/OPERATIONS.md](docs/OPERATIONS.md): Resend + Supabase SMTP, e-mailtemplate met code,
+eerste beheerder, en het verwijderen van twee vervallen Edge Functions.
 
 ## Docs
 
-[Architectuur](docs/ARCHITECTURE.md) · [Beveiliging](docs/SECURITY.md) · [Design](docs/DESIGN.md) · [Takenlijst](docs/TASKS.md)
+[Architectuur](docs/ARCHITECTURE.md) · [Beveiliging](docs/SECURITY.md) ·
+[Operations](docs/OPERATIONS.md) · [Design](docs/DESIGN.md) · [Takenlijst](docs/TASKS.md)
