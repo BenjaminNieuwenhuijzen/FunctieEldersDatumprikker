@@ -4,7 +4,7 @@
 
 ```
 Browser (GitHub Pages, statisch)          Supabase (eu-central-1)
-  Vite + React + TS + Tailwind   ──────►   Auth: e-mail met eenmalige code (via Resend SMTP)
+  Vite + React + TS + Tailwind   ──────►   Auth: e-mail met eenmalige code (link of code; SMTP via Gmail)
   HashRouter                               Postgres: RLS op alle tabellen
   supabase-js (publishable key)            RPC's: publieke reads, cast_vote, beheer
                                            Edge Function: submit-suggestion (anoniem idee)
@@ -53,7 +53,7 @@ docs/            ARCHITECTURE, SECURITY, OPERATIONS, DESIGN, TASKS
 ## Beslissingen
 
 - **E-mailcode i.p.v. bewerklinks** (op verzoek): sterkere één-stem-garantie, geen link om kwijt
-  te raken. Vereist eigen SMTP (Resend).
+  te raken. Vereist eigen SMTP (Gmail-app-wachtwoord); tot die tijd werkt de inloglink voor de eigenaar.
 - **Tailwind v4**, geen animatiebibliotheek; **fonts zelf gehost** (geen Google Fonts).
 - **Geen analytics, geen trackingcookies.**
 - **Geen verzonnen data**: datums en restaurantdetails komen alleen via beheer.

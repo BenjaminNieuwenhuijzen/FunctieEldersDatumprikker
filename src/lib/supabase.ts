@@ -7,8 +7,14 @@ const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
 export const supabase: SupabaseClient | null =
   url && key
     ? createClient(url, key, {
-        // Alleen beheerders loggen in; sessie in localStorage van dit origin.
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
+        // Sessie in localStorage van dit origin. 'implicit' zodat een inloglink ook werkt als hij
+        // op een ander apparaat/browser wordt geopend dan waar hij is aangevraagd.
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          flowType: 'implicit',
+        },
       })
     : null;
 

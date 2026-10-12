@@ -7,49 +7,48 @@ Productie: <https://benjaminnieuwenhuijzen.github.io/FunctieEldersDatumprikker/>
 
 Deze stappen kan alleen de eigenaar doen (accounts, secrets, dashboardinstellingen).
 
-### 1a. Resend (verstuurt de inlogcodes)
+### 1a. Status (12-10-2026)
 
-De ingebouwde mail van Supabase stuurt alleen naar leden van de eigen Supabase-organisatie en
-heeft een zeer lage limiet. Voor deelnemers is een eigen SMTP-provider dus verplicht.
+Al ingesteld: Site URL = productie-URL; Redirect URLs =
+`https://benjaminnieuwenhuijzen.github.io/FunctieEldersDatumprikker/**` en `http://localhost:5173/**`.
 
-1. Maak een account op <https://resend.com>.
-2. **Domains → Add domain**: voeg een domein toe dat je bezit (bijv. `mail.jouwdomein.nl`) en zet de
-   getoonde DNS-records (SPF/DKIM) bij je domeinregistrar. Wacht tot de status _Verified_ is.
-   Zonder eigen domein kan Resend alleen naar je eigen adres mailen; gebruik dan Brevo als alternatief.
-3. **API Keys → Create API key** met alleen _Sending access_. Bewaar hem in je wachtwoordmanager.
+Zonder eigen SMTP gebruikt Supabase de standaardmail. Die stuurt **alleen naar leden van de eigen
+Supabase-organisatie** (dus de eigenaar), met een zeer lage limiet en een **inloglink** (templates
+zijn pas aan te passen met eigen SMTP). De app ondersteunt die link, dus de beheerder kan al
+inloggen. Voor de groep is eigen SMTP nodig (1b).
 
-### 1b. Supabase Auth
+### 1b. Gmail als mailprovider (geen eigen domein nodig)
 
-Dashboard → **Authentication**:
-
-1. **Emails → SMTP Settings → Enable custom SMTP**
-   - Sender email: bijv. `etentje@mail.jouwdomein.nl` · Sender name: `Functie Elders`
-   - Host `smtp.resend.com` · Port `465` · Username `resend` · Password: de Resend API key
-2. **Emails → Templates → Magic Link** (deze template wordt ook voor codes gebruikt). Onderwerp
-   `Je code voor Functie Elders` en als inhoud bijvoorbeeld:
+1. Zet tweestapsverificatie aan op het Google-account dat de mails verstuurt.
+2. Maak een **app-wachtwoord**: <https://myaccount.google.com/apppasswords> (naam bijv.
+   "Supabase Functie Elders"). Bewaar het in je wachtwoordmanager.
+3. Supabase → **Authentication → Emails → SMTP Settings → Enable custom SMTP**:
+   - Sender email: je Gmail-adres · Sender name: `Functie Elders`
+   - Host `smtp.gmail.com` · Port `465` · Username: je Gmail-adres · Password: het app-wachtwoord
+4. **Emails → Templates**: pas zowel **Magic link or OTP** als **Confirm sign up** aan (nieuwe
+   deelnemers krijgen de laatste). Onderwerp `Inloggen bij Functie Elders`, inhoud bijvoorbeeld:
 
    ```html
-   <h2>Je inlogcode</h2>
-   <p>Vul deze code in op de datumprikker van Functie Elders:</p>
+   <h2>Inloggen bij Functie Elders</h2>
+   <p>Vul deze code in op de datumprikker:</p>
    <p style="font-size:28px;font-weight:bold;letter-spacing:4px">{{ .Token }}</p>
+   <p>Of klik op deze link: <a href="{{ .ConfirmationURL }}">inloggen</a></p>
    <p>Heb je dit niet aangevraagd? Dan kun je deze mail negeren.</p>
    ```
 
-   Belangrijk: `{{ .Token }}` moet erin staan, anders krijgen mensen een link in plaats van een code.
+   Met code én link werkt het ook als iemand de mail op een ander apparaat leest.
 
-3. **Sign In / Providers → Email**: _Enable Email provider_ aan, _Confirm email_ aan.
-   Email OTP expiration: 600 seconden (10 minuten) is prima.
-4. **URL Configuration → Site URL**:
-   `https://benjaminnieuwenhuijzen.github.io/FunctieEldersDatumprikker/`
-5. **Rate Limits**: _Emails sent per hour_ bijv. 60 (na het instellen van SMTP aanpasbaar).
+5. **Rate Limits**: _Emails sent per hour_ bijv. 60. Gmail staat ca. 500 mails per dag toe.
 6. Optioneel, aanbevolen vóór breed delen: **Attack Protection → Enable Captcha protection** met
-   Cloudflare Turnstile. Maak een Turnstile-widget op <https://dash.cloudflare.com> (hostname
-   `benjaminnieuwenhuijzen.github.io` en `localhost`), zet de _secret key_ hier in Supabase, en de
-   _site key_ (publiek) in `.env.production` als `VITE_TURNSTILE_SITE_KEY`.
+   Cloudflare Turnstile. Secret key in Supabase, site key (publiek) in `.env.production` als
+   `VITE_TURNSTILE_SITE_KEY`.
+
+Alternatief met eigen domein: Resend (`smtp.resend.com`, poort 465, gebruiker `resend`, wachtwoord =
+API key) na het verifiëren van het domein.
 
 ### 1c. Eerste beheerder
 
-1. Open `#/admin` op de site en log in met je eigen e-mailadres (code uit de mail).
+1. Open `#/admin` op de site en log in met je eigen e-mailadres (link of code uit de mail).
 2. Je ziet "Geen beheerrechten". Voer dan in de Supabase **SQL Editor** uit (vul je e-mail in):
 
    ```sql
@@ -112,7 +111,7 @@ begrenst het aantal codes per e-mailadres en per uur.
 
 - Supabase Free: geen kosten zolang het project binnen de gratis limieten blijft. Inactieve gratis
   projecten worden na een week gepauzeerd; wekken kan in het dashboard.
-- Resend Free: ruim voldoende voor een groep van ~12 personen.
+- Gmail-SMTP: gratis, ca. 500 mails per dag; ruim voldoende voor ~12 personen.
 - GitHub Pages: gratis voor publieke repositories.
 - Er is geen betaalde restaurant-API gekoppeld.
 

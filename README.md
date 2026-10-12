@@ -11,7 +11,7 @@ Productie: <https://benjaminnieuwenhuijzen.github.io/FunctieEldersDatumprikker/>
 | ----------------------------------------------------------------- | ---------------------------------------- |
 | Frontend, design system (`#/design`), responsive, lege/laadstaten | werkt                                    |
 | Database, RLS, publieke lees-RPC's, geschiedenis-tijdlijn         | werkt (35 beveiligingstests geslaagd)    |
-| Inloggen met e-mailcode, stemmen, wijzigen                        | gebouwd; werkt zodra SMTP is ingesteld   |
+| Inloggen met e-mail (link of code), stemmen, wijzigen             | gebouwd; voor de groep na SMTP-setup     |
 | Beheer (etentjes, datums, restaurants, aanwezigheid, afronden)    | gebouwd; werkt zodra er een beheerder is |
 | Ontdekpagina met ideeën en reacties, aanbevelingen                | Fase C/D                                 |
 
@@ -46,7 +46,7 @@ Source: GitHub Actions). Routing via `HashRouter`, dus verversen werkt op elke p
 
 ## Handmatige stappen
 
-Zie [docs/OPERATIONS.md](docs/OPERATIONS.md): Resend + Supabase SMTP, e-mailtemplate met code,
+Zie [docs/OPERATIONS.md](docs/OPERATIONS.md): Gmail-SMTP, e-mailtemplates met code,
 eerste beheerder, en het verwijderen van twee vervallen Edge Functions.
 
 ## Docs

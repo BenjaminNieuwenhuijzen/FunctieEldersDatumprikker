@@ -12,7 +12,7 @@ Legenda: ✅ klaar en getest · 🧪 gebouwd, nog niet end-to-end getest · ⏳ 
 - ✅ Schema + RLS + RPC's in Supabase (migrations in `supabase/migrations/`)
 - ✅ 35 database-beveiligingstests geslaagd
 - ✅ Publieke pagina's lezen echte data (home, event, geschiedenis)
-- 🧪 Inloggen met e-mailcode → stemmen → wijzigen (⏳ SMTP via Resend, zie OPERATIONS 1a/1b)
+- 🧪 Inloggen met e-mailcode → stemmen → wijzigen (⏳ SMTP via Gmail, zie OPERATIONS 1b)
 - 🧪 Beheer: etentjes, datums, restaurants, openen/sluiten, aanwezigheid, CSV, afronden,
   suggesties modereren, noodstop, opschonen (⏳ eerste beheerder, OPERATIONS 1c)
 - ⏳ Turnstile (optioneel)

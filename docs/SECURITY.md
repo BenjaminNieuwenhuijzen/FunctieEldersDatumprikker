@@ -20,14 +20,14 @@ Publieke repo en publieke URL zijn prima. Open schrijfrechten en publieke persoo
 
 ## Secrets
 
-| Waarde                           | Waar                                   | Publiek?      |
-| -------------------------------- | -------------------------------------- | ------------- |
-| Supabase URL + publishable key   | `.env.production` (in repo)            | ja, by design |
-| Turnstile site key               | `.env.production`                      | ja            |
-| Turnstile secret                 | Supabase Auth → Attack Protection      | **nee**       |
-| Resend API key (SMTP-wachtwoord) | Supabase Auth → SMTP Settings          | **nee**       |
-| Service-role key                 | alleen Edge Function-omgeving          | **nee**       |
-| Database-wachtwoord              | Supabase-dashboard / wachtwoordmanager | **nee**       |
+| Waarde                         | Waar                                   | Publiek?      |
+| ------------------------------ | -------------------------------------- | ------------- |
+| Supabase URL + publishable key | `.env.production` (in repo)            | ja, by design |
+| Turnstile site key             | `.env.production`                      | ja            |
+| Turnstile secret               | Supabase Auth → Attack Protection      | **nee**       |
+| SMTP-wachtwoord (Gmail-app)    | Supabase Auth → SMTP Settings          | **nee**       |
+| Service-role key               | alleen Edge Function-omgeving          | **nee**       |
+| Database-wachtwoord            | Supabase-dashboard / wachtwoordmanager | **nee**       |
 
 ## Dreigingen en maatregelen
 
@@ -52,7 +52,7 @@ De beheerder ziet e-mailadressen in het aanwezigheidsoverzicht en kan duplicaten
 - Verzameld: e-mailadres, schermnaam, beschikbaarheid, restaurantkeuze, optioneel een idee.
 - Nooit publiek; alleen beheerders zien namen en e-mailadressen.
 - Geen cookies voor tracking, geen analytics. De inlogsessie staat in `localStorage` van de site.
-- Data staat bij Supabase in de EU (Frankfurt); mails gaan via Resend.
+- Data staat bij Supabase in de EU (Frankfurt); mails gaan via de ingestelde SMTP-provider (Gmail).
 - Retentie: opschonen 90 dagen na afronding (zie `OPERATIONS.md`).
 
 ## Tests

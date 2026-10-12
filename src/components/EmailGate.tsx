@@ -1,19 +1,22 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { requestCode, verifyCode } from '../lib/auth';
+import { requestCode, takeAuthError, verifyCode } from '../lib/auth';
 import { turnstileSiteKey } from '../lib/supabase';
 import { Turnstile } from './Turnstile';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const RESEND_SECONDS = 60;
 
-/** Twee stappen: e-mailadres → eenmalige code uit de mail. Daarna is er een sessie. */
+/**
+ * Twee stappen: e-mailadres → inlogmail. De mail bevat een link en/of een code (afhankelijk van de
+ * Supabase-mailtemplate); beide leveren een sessie op.
+ */
 export function EmailGate({ intro }: { intro?: string }) {
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [captcha, setCaptcha] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(takeAuthError);
   const [wait, setWait] = useState(0);
 
   useEffect(() => {
@@ -64,7 +67,7 @@ export function EmailGate({ intro }: { intro?: string }) {
             <h2 className="mt-2 text-3xl">Bevestig je e-mailadres</h2>
             <p className="mt-3 max-w-xl text-mist">
               {intro ??
-                'Je krijgt een code per mail. Zo telt iedereen één keer mee en kun je later je antwoord aanpassen.'}
+                'Je krijgt een inlogmail. Zo telt iedereen één keer mee en kun je later je antwoord aanpassen.'}
             </p>
           </div>
           <div>
@@ -90,7 +93,7 @@ export function EmailGate({ intro }: { intro?: string }) {
             </p>
           )}
           <button className="btn btn-primary" disabled={busy}>
-            {busy ? 'Code versturen…' : 'Stuur mij een code'}
+            {busy ? 'Mail versturen…' : 'Stuur mij een inlogmail'}
           </button>
           <p className="max-w-xl text-sm text-mist">
             Je e-mailadres is nooit publiek en wordt alleen gebruikt om in te loggen. Alleen de
@@ -101,15 +104,16 @@ export function EmailGate({ intro }: { intro?: string }) {
         <form onSubmit={confirm} noValidate className="space-y-5">
           <div>
             <p className="eyebrow">Stap 2 van 2</p>
-            <h2 className="mt-2 text-3xl">Vul je code in</h2>
+            <h2 className="mt-2 text-3xl">Check je mail</h2>
             <p className="mt-3 max-w-xl text-mist" aria-live="polite">
-              We hebben een code gestuurd naar <strong className="text-paper">{email}</strong>. Geen
+              We hebben een mail gestuurd naar <strong className="text-paper">{email}</strong>. Klik
+              op de link in die mail, of vul hieronder de code in als de mail een code bevat. Geen
               mail? Kijk ook in je spam.
             </p>
           </div>
           <div>
             <label htmlFor="eg-code" className="block font-semibold">
-              Code
+              Code (als je die hebt gekregen)
             </label>
             <input
               id="eg-code"
@@ -138,7 +142,7 @@ export function EmailGate({ intro }: { intro?: string }) {
               disabled={busy || wait > 0}
               onClick={() => sendCode()}
             >
-              {wait > 0 ? `Nieuwe code over ${wait}s` : 'Stuur nieuwe code'}
+              {wait > 0 ? `Nieuwe mail over ${wait}s` : 'Stuur nieuwe mail'}
             </button>
             <button
               type="button"

@@ -33,12 +33,32 @@ function authMessage(error: { message?: string; status?: number; code?: string }
   return 'Er ging iets mis. Probeer het opnieuw.';
 }
 
-/** Stuurt een eenmalige code naar het e-mailadres (maakt zo nodig een account aan). */
+const SAFE_ROUTE = /^\/[a-z0-9/_-]*$/i;
+
+/**
+ * Waar de inloglink naartoe terugkeert. HashRouter gebruikt het fragment al, en Supabase zet de
+ * sessietokens óók in het fragment; daarom gaat de route mee als query (?next=) en herstelt
+ * `completeLinkLogin` hem na het inloggen.
+ */
+function redirectUrl(): string {
+  const route = location.hash.slice(1) || '/';
+  const next = SAFE_ROUTE.test(route) ? route : '/';
+  return `${location.origin}${import.meta.env.BASE_URL}?next=${encodeURIComponent(next)}`;
+}
+
+/**
+ * Stuurt een inlogmail (maakt zo nodig een account aan). Afhankelijk van de mailtemplate bevat
+ * die een code, een link, of beide; de app ondersteunt alle varianten.
+ */
 export async function requestCode(email: string, captchaToken?: string): Promise<void> {
   if (!supabase) throw new Error('Inloggen is nog niet beschikbaar.');
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { shouldCreateUser: true, captchaToken: captchaToken || undefined },
+    options: {
+      shouldCreateUser: true,
+      captchaToken: captchaToken || undefined,
+      emailRedirectTo: redirectUrl(),
+    },
   });
   if (error) throw new Error(authMessage(error));
 }
@@ -51,4 +71,40 @@ export async function verifyCode(email: string, code: string): Promise<void> {
 
 export async function signOut(): Promise<void> {
   await supabase?.auth.signOut();
+}
+
+export const AUTH_ERROR_KEY = 'fe-auth-error';
+
+/**
+ * Verwerkt een terugkeer via de inloglink (vóór de router start): Supabase leest de tokens uit
+ * het fragment, daarna zetten we de oorspronkelijke route terug en halen we tokens uit de URL.
+ */
+export async function completeLinkLogin(): Promise<void> {
+  const hash = location.hash.slice(1);
+  if (!supabase || !/(^|&)(access_token|error)=/.test(hash)) return;
+  const params = new URLSearchParams(hash);
+  if (params.get('error')) {
+    try {
+      sessionStorage.setItem(
+        AUTH_ERROR_KEY,
+        'Deze inloglink is ongeldig of verlopen. Vraag hieronder een nieuwe aan.',
+      );
+    } catch {
+      /* opslag geblokkeerd: dan alleen geen melding */
+    }
+  } else {
+    await supabase.auth.getSession();
+  }
+  const next = new URLSearchParams(location.search).get('next') ?? '/';
+  history.replaceState(null, '', `${location.pathname}#${SAFE_ROUTE.test(next) ? next : '/'}`);
+}
+
+export function takeAuthError(): string {
+  try {
+    const m = sessionStorage.getItem(AUTH_ERROR_KEY) ?? '';
+    sessionStorage.removeItem(AUTH_ERROR_KEY);
+    return m;
+  } catch {
+    return '';
+  }
 }
