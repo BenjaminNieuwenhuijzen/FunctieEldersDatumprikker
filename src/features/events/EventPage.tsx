@@ -47,12 +47,64 @@ function MyVote({
             event={event}
             initial={mine.data.vote}
             defaultName={mine.data.lastDisplayName ?? ''}
-            onSubmit={(p) => api.castVote(event.id, p)}
+            onSubmit={(p) =>
+              event.datesOpen ? api.castAvailability(event.id, p) : api.castVenueVote(event.id, p)
+            }
             onSaved={onSaved}
           />
         </>
       )}
     </div>
+  );
+}
+
+/** Stappen: eerst restaurant, dan datum. Maakt de vergrendeling zichtbaar. */
+function PhaseSteps({ event }: { event: PollEvent }) {
+  const steps = [
+    {
+      n: 1,
+      title: 'Restaurant kiezen',
+      sub: event.datesOpen ? `Gekozen: ${event.decidedVenue?.name ?? 'vastgelegd'}` : 'Nu bezig',
+      state: event.datesOpen ? 'done' : 'active',
+    },
+    {
+      n: 2,
+      title: 'Datum prikken',
+      sub: event.datesOpen ? 'Nu bezig' : 'Op slot tot het restaurant vaststaat',
+      state: event.datesOpen ? 'active' : 'locked',
+    },
+  ] as const;
+  return (
+    <ol className="mt-8 grid gap-3 sm:grid-cols-2" aria-label="Stappen">
+      {steps.map((s) => (
+        <li
+          key={s.n}
+          aria-current={s.state === 'active' ? 'step' : undefined}
+          className={`flex items-center gap-4 rounded-2xl border p-4 ${
+            s.state === 'active' ? 'border-coral bg-ink' : 'border-line'
+          } ${s.state === 'locked' ? 'opacity-60' : ''}`}
+        >
+          <span
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-display text-lg font-extrabold ${
+              s.state === 'done'
+                ? 'bg-yes text-night'
+                : s.state === 'active'
+                  ? 'bg-coral text-night'
+                  : 'border border-line text-mist'
+            }`}
+            aria-hidden="true"
+          >
+            {s.state === 'done' ? '✓' : s.state === 'locked' ? '🔒' : s.n}
+          </span>
+          <span>
+            <span className="block font-semibold">
+              {s.n}. {s.title}
+            </span>
+            <span className="text-sm text-mist">{s.sub}</span>
+          </span>
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -95,6 +147,7 @@ export function EventPage() {
     <main id="main" className="mx-auto max-w-4xl px-5 pt-8">
       <p className="eyebrow">{event.status === 'open' ? 'Poll open' : 'Poll gesloten'}</p>
       <h1 className="h-section mt-2 text-4xl">{event.title}</h1>
+      <PhaseSteps event={event} />
       <div className="mt-10">
         {event.status !== 'open' ? (
           <p className="rounded-2xl border border-line p-4">
@@ -103,11 +156,32 @@ export function EventPage() {
         ) : session.status === 'loading' ? (
           <Loading />
         ) : session.session ? (
-          <MyVote
-            event={event}
-            email={session.session.user.email ?? ''}
-            onSaved={() => setTallyVersion((v) => v + 1)}
-          />
+          <>
+            {event.datesOpen && event.decidedVenue && (
+              <div className="mb-8 rounded-3xl border border-yes/60 bg-ink p-5 sm:p-6">
+                <p className="eyebrow text-yes">We gaan naar</p>
+                <p className="mt-1 font-display text-3xl font-bold">{event.decidedVenue.name}</p>
+                {event.decidedVenue.description && (
+                  <p className="mt-2 max-w-2xl text-mist">{event.decidedVenue.description}</p>
+                )}
+                {event.decidedVenue.websiteUrl && (
+                  <a
+                    href={event.decidedVenue.websiteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-block underline underline-offset-4"
+                  >
+                    Website ↗
+                  </a>
+                )}
+              </div>
+            )}
+            <MyVote
+              event={event}
+              email={session.session.user.email ?? ''}
+              onSaved={() => setTallyVersion((v) => v + 1)}
+            />
+          </>
         ) : (
           <EmailGate />
         )}

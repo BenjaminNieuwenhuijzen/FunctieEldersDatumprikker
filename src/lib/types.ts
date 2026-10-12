@@ -25,6 +25,8 @@ export interface Venue {
   priceBand?: 1 | 2 | 3 | 4;
   /** ISO-tijdstip waarop de gegevens door de beheerder zijn geverifieerd. */
   verifiedAt?: string;
+  lat?: number;
+  lon?: number;
 }
 
 export interface PollEvent {
@@ -33,6 +35,11 @@ export interface PollEvent {
   title: string;
   status: EventStatus;
   timezone: string;
+  /** Fase 2: de beheerder heeft het restaurant vastgelegd en de datumprikker geopend. */
+  datesOpen: boolean;
+  /** Gekozen restaurant (alleen bekend zodra de datumprikker open is). */
+  decidedVenue?: Venue | null;
+  /** Leeg zolang de datumprikker op slot zit. */
   dateOptions: DateOption[];
   venues: Venue[];
   /** Voor de UI: toon "voorbeeld" bij demo-data. */

@@ -18,8 +18,10 @@ export interface PollApi {
   getTally(eventId: string): Promise<PublicTally>;
   /** Kandidaat-restaurants voor het eerstvolgende etentje. */
   listVenues(): Promise<Venue[]>;
-  /** Vereist een ingelogde gebruiker met bevestigd e-mailadres. Nieuw of wijziging. */
-  castVote(eventId: string, payload: VotePayload): Promise<void>;
+  /** Fase 1 (datumprikker op slot): restaurantstem. Vereist ingelogde, bevestigde gebruiker. */
+  castVenueVote(eventId: string, payload: VotePayload): Promise<void>;
+  /** Fase 2 (datumprikker open): beschikbaarheid per datum. */
+  castAvailability(eventId: string, payload: VotePayload): Promise<void>;
   getMyVote(eventId: string): Promise<MyVote>;
   /** Bevestigde bezoeken, nieuwste eerst. */
   listVisits(): Promise<Visit[]>;
@@ -46,7 +48,10 @@ export const emptyApi: PollApi = {
   getEventBySlug: async () => null,
   getTally: async () => ({ participantCount: 0, dates: {}, venues: { none: 0 } }),
   listVenues: async () => firstEventVenues,
-  castVote: async () => {
+  castVenueVote: async () => {
+    throw new NotConfiguredError();
+  },
+  castAvailability: async () => {
     throw new NotConfiguredError();
   },
   getMyVote: async () => ({ vote: null, lastDisplayName: null }),

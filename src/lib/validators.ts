@@ -14,11 +14,18 @@ export function isHttpUrl(value: string): boolean {
   }
 }
 
-/** Client-side controle voor snelle feedback. De Edge Function valideert opnieuw (server is leidend). */
+/**
+ * Welke delen van een stem gevuld moeten zijn: fase 1 alleen het restaurant, fase 2 alleen
+ * datums ('both' voor de demo/tests).
+ */
+export type VotePhase = 'venue' | 'dates' | 'both';
+
+/** Client-side controle voor snelle feedback. De database valideert opnieuw (server is leidend). */
 export function validateVote(
   payload: Partial<VotePayload>,
   dateOptions: DateOption[],
   venueIds: string[],
+  phase: VotePhase = 'both',
 ): VoteErrors {
   const errors: VoteErrors = {};
   const name = (payload.displayName ?? '').trim();
@@ -27,10 +34,11 @@ export function validateVote(
 
   const valid = new Set(dateOptions.map((d) => d.id));
   const answered = Object.keys(payload.availability ?? {}).filter((id) => valid.has(id));
-  if (answered.length === 0) errors.availability = 'Geef bij minstens één datum een antwoord.';
+  if (phase !== 'venue' && answered.length === 0)
+    errors.availability = 'Geef bij minstens één datum een antwoord.';
 
   const choice = payload.venueChoice;
-  if (!choice || (choice !== NO_PREFERENCE && !venueIds.includes(choice))) {
+  if (phase !== 'dates' && (!choice || (choice !== NO_PREFERENCE && !venueIds.includes(choice)))) {
     errors.venue = 'Kies een restaurant of "geen voorkeur".';
   }
 

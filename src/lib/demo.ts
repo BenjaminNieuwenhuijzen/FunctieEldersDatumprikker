@@ -29,6 +29,9 @@ export function createDemo() {
     title: 'Voorbeeld-etentje',
     status: 'open',
     timezone: 'Europe/Amsterdam',
+    // Demo toont fase 2 (datums), zodat het datumprikker-ontwerp zichtbaar is.
+    datesOpen: true,
+    decidedVenue: firstEventVenues[0],
     dateOptions,
     venues: firstEventVenues,
     isDemo: true,

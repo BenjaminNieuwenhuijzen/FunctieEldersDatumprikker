@@ -14,6 +14,7 @@ export interface AdminEvent {
   status: EventStatus;
   starts_at: string | null;
   decided_venue_id: string | null;
+  dates_open: boolean;
   completed_at: string | null;
   created_at: string;
 }

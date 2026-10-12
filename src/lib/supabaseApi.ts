@@ -27,6 +27,8 @@ const MESSAGES: Record<string, string> = {
   not_authenticated: 'Je bent uitgelogd. Bevestig opnieuw je e-mailadres.',
   email_not_verified: 'Bevestig eerst je e-mailadres.',
   forbidden: 'Hiervoor heb je geen rechten.',
+  dates_locked: 'De datumprikker zit nog op slot: eerst wordt het restaurant gekozen.',
+  venue_phase_closed: 'Het restaurant is al gekozen. Ververs de pagina om je datums door te geven.',
 };
 
 export function messageFor(error: { message?: string } | null | undefined, fallback: string) {
@@ -53,18 +55,25 @@ function createSupabaseApi(client: SupabaseClient): PollApi {
       return t ?? { participantCount: 0, dates: {}, venues: { none: 0 } };
     },
     listVenues: () => rpc<Venue[]>(client, 'get_upcoming_venues'),
-    async castVote(eventId, p: VotePayload) {
+    async castVenueVote(eventId, p: VotePayload) {
       await rpc(
         client,
-        'cast_vote',
+        'cast_venue_vote',
         {
           p_event_id: eventId,
           p_display_name: p.displayName,
-          p_availability: p.availability,
           p_venue_id: p.venueChoice === NO_PREFERENCE ? null : p.venueChoice,
           p_no_preference: p.venueChoice === NO_PREFERENCE,
           p_suggestion: p.suggestion?.name ? p.suggestion : null,
         },
+        'Opslaan is mislukt. Probeer het opnieuw.',
+      );
+    },
+    async castAvailability(eventId, p: VotePayload) {
+      await rpc(
+        client,
+        'cast_availability',
+        { p_event_id: eventId, p_display_name: p.displayName, p_availability: p.availability },
         'Opslaan is mislukt. Probeer het opnieuw.',
       );
     },

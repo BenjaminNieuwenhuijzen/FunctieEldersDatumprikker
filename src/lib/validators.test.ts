@@ -54,4 +54,13 @@ describe('validateVote', () => {
     );
     expect(e).toEqual({});
   });
+
+  it('vraagt in fase 1 alleen een restaurant en in fase 2 alleen datums', () => {
+    const venueOnly = { displayName: 'Sam', availability: {}, venueChoice: 'v1' };
+    expect(validateVote(venueOnly, dates, ['v1'], 'venue')).toEqual({});
+    expect(validateVote(venueOnly, dates, ['v1'], 'dates').availability).toBeDefined();
+    const datesOnly = { displayName: 'Sam', availability: { a: 'yes' as const }, venueChoice: '' };
+    expect(validateVote(datesOnly, dates, ['v1'], 'dates')).toEqual({});
+    expect(validateVote(datesOnly, dates, ['v1'], 'venue').venue).toBeDefined();
+  });
 });

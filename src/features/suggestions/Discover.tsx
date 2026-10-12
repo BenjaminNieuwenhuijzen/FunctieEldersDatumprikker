@@ -6,7 +6,7 @@ import { api } from '../../lib/supabaseApi';
 import { ErrorNote, Loading, useAsync } from '../../lib/useAsync';
 import { isHttpUrl, LIMITS } from '../../lib/validators';
 import { CuisineArt } from './CuisineArt';
-import { cuisineLabel, seasonOf } from './cuisines';
+import { cuisineKeyFromLabel, cuisineLabel, seasonOf } from './cuisines';
 import { discoverApi, type GroupSuggestion, type Tally, type VoteTarget } from './discoverApi';
 import { KIND_STYLE, type MapPoint } from './mapTypes';
 import {
@@ -295,7 +295,9 @@ export function Discover() {
       })),
       candidates: venues.map((v) => ({
         name: v.name,
-        cuisines: places.find((p) => sameName(p.name, v.name))?.cuisines,
+        cuisines:
+          places.find((p) => sameName(p.name, v.name))?.cuisines ??
+          v.cuisineTags.map((t) => cuisineKeyFromLabel(t)).filter((k): k is string => !!k),
       })),
       exclusions: meta.exclusions,
       alreadySuggested: new Set(suggestions.map((s) => s.osmRef).filter((r): r is string => !!r)),
@@ -330,15 +332,17 @@ export function Discover() {
     }
     for (const v of venues) {
       const p = findPlace(v.name);
-      if (p)
+      const lat = v.lat ?? p?.lat;
+      const lon = v.lon ?? p?.lon;
+      if (lat != null && lon != null)
         points.push({
           id: `cand:${v.id}`,
-          lat: p.lat,
-          lon: p.lon,
+          lat,
+          lon,
           name: v.name,
           subtitle: 'Kandidaat volgend etentje',
           kind: 'candidate',
-          googleUrl: googleMapsUrl(p),
+          googleUrl: googleMapsUrl(p ?? { name: v.name, city: v.city }),
         });
     }
     for (const v of visits) {

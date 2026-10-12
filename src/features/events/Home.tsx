@@ -41,28 +41,45 @@ export function Home() {
               {state.data.event ? (
                 <div className="rounded-3xl border border-line bg-ink p-6 sm:p-10">
                   <h3 className="text-3xl">{state.data.event.title}</h3>
-                  <ul className="mt-4 flex flex-wrap gap-2">
-                    {state.data.event.dateOptions.map((d) => (
-                      <li key={d.id} className="chip">
-                        {describeDate(d)}
-                      </li>
-                    ))}
-                  </ul>
+                  {state.data.event.datesOpen ? (
+                    <>
+                      <p className="mt-3 text-mist">
+                        Stap 2 van 2 · We gaan naar{' '}
+                        <strong className="text-paper">
+                          {state.data.event.decidedVenue?.name ?? 'het gekozen restaurant'}
+                        </strong>
+                        . Geef door wanneer je kunt.
+                      </p>
+                      <ul className="mt-4 flex flex-wrap gap-2">
+                        {state.data.event.dateOptions.map((d) => (
+                          <li key={d.id} className="chip">
+                            {describeDate(d)}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <p className="mt-3 text-mist">
+                      Stap 1 van 2 · Eerst kiezen we samen het restaurant. Daarna gaat de
+                      datumprikker open.
+                    </p>
+                  )}
                   <Link to={`/event/${state.data.event.slug}`} className="btn btn-primary mt-8">
-                    Stem mee
+                    {state.data.event.datesOpen ? 'Prik een datum' : 'Stem op een restaurant'}
                   </Link>
                 </div>
               ) : (
                 <EmptyState
-                  title="De datums volgen nog"
+                  title="Het volgende etentje wordt voorbereid"
                   action={
                     <Link to="/ontdek" className="btn">
                       Stel alvast een restaurant voor
                     </Link>
                   }
                 >
-                  Zodra er datums zijn geprikt, kun je hier meestemmen. Je bevestigt alleen even je
-                  e-mailadres met een code; een wachtwoord of account is niet nodig.
+                  Straks stem je hier eerst op het restaurant; daarna gaat de datumprikker open. Je
+                  bevestigt alleen even je e-mailadres met een code; een wachtwoord of account is
+                  niet nodig.
                 </EmptyState>
               )}
             </div>

@@ -119,6 +119,79 @@ export function EventEditor({ event, onChanged }: { event: AdminEvent; onChanged
         )}
       </Panel>
 
+      <Panel title="Fase: restaurant → datum">
+        {event.dates_open ? (
+          <div>
+            <p>
+              Datumprikker staat <strong className="text-yes">open</strong> voor{' '}
+              <strong>{venues.find((v) => v.id === event.decided_venue_id)?.name ?? '—'}</strong>.
+            </p>
+            <button
+              type="button"
+              className="btn mt-4"
+              disabled={status.busy}
+              onClick={() => {
+                if (
+                  window.confirm(
+                    'Datumprikker weer op slot zetten? Restaurantstemmen kan dan weer.',
+                  )
+                )
+                  void status.act(
+                    () => adminApi.updateEvent(event.id, { dates_open: false }),
+                    onChanged,
+                  );
+              }}
+            >
+              Datumprikker weer op slot
+            </button>
+          </div>
+        ) : (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const venueId = new FormData(e.currentTarget).get('decided') as string | null;
+              if (!venueId) return;
+              const name = venues.find((v) => v.id === venueId)?.name;
+              if (!window.confirm(`${name} vastleggen en de datumprikker openzetten?`)) return;
+              void status.act(
+                () =>
+                  adminApi.updateEvent(event.id, { decided_venue_id: venueId, dates_open: true }),
+                onChanged,
+              );
+            }}
+          >
+            <p className="text-mist">
+              De datumprikker zit op slot. Kies het restaurant (zie de uitslag hieronder) en zet
+              daarna de datumprikker open.
+            </p>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {venues
+                .filter((v) => selected.includes(v.id))
+                .map((v) => (
+                  <label
+                    key={v.id}
+                    className="flex min-h-11 items-center gap-3 rounded-xl border border-line px-4"
+                  >
+                    <input
+                      type="radio"
+                      name="decided"
+                      value={v.id}
+                      className="h-5 w-5 accent-[var(--color-coral)]"
+                    />
+                    {v.name}
+                  </label>
+                ))}
+            </div>
+            {dates.length === 0 && (
+              <p className="error-text mt-3">Tip: voeg eerst datumopties toe voordat je opent.</p>
+            )}
+            <button className="btn btn-primary mt-4" disabled={status.busy}>
+              Restaurant vastleggen en datumprikker openen
+            </button>
+          </form>
+        )}
+      </Panel>
+
       <DatesPanel eventId={event.id} dates={dates} onChanged={reload} />
 
       <Panel title="Restaurants in de stemming">
